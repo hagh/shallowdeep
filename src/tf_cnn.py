@@ -1,3 +1,6 @@
+import cnn_utils
+import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework import ops
 
@@ -17,8 +20,8 @@ def create_placeholders(n_H0, n_W0, n_C0, n_y):
     """
 
     ### START CODE HERE ### (≈2 lines)
-    X = tf.placeholder(tf.float32, shape = (None, n_H0, n_W0, n_C0), name= "X")
-    Y = tf.placeholder(tf.float32, shape = (None, n_y), name = "Y")
+    X = tf.compat.v1.placeholder(tf.float32, shape = (None, n_H0, n_W0, n_C0), name= "X")
+    Y = tf.compat.v1.placeholder(tf.float32, shape = (None, n_y), name = "Y")
     ### END CODE HERE ###
     
     return X, Y
@@ -32,11 +35,11 @@ def initialize_parameters():
     parameters -- a dictionary of tensors containing W1, W2
     """
     
-    tf.set_random_seed(1)                              # so that your "random" numbers match ours
+    tf.compat.v1.set_random_seed(1)                              # so that your "random" numbers match ours
         
     ### START CODE HERE ### (approx. 2 lines of code)
-    W1 = tf.get_variable("W1", [4,4,3,8], initializer = tf.contrib.layers.xavier_initializer(seed = 0))
-    W2 = tf.get_variable("W2", [2,2,8,16], initializer = tf.contrib.layers.xavier_initializer(seed = 0))
+    W1 = tf.compat.v1.get_variable("W1", [4,4,3,8], initializer = tf.contrib.layers.xavier_initializer(seed = 0))
+    W2 = tf.compat.v1.get_variable("W2", [2,2,8,16], initializer = tf.contrib.layers.xavier_initializer(seed = 0))
     ### END CODE HERE ###
 
     parameters = {"W1": W1,
@@ -69,18 +72,18 @@ def forward_propagation(X, parameters):
     # RELU
     A1 = tf.nn.relu(Z1)
     # MAXPOOL: window 8x8, sride 8, padding 'SAME'
-    P1 = tf.nn.max_pool(A1, ksize=[1,8,8,1], strides=[1,8,8,1], padding='SAME')
+    P1 = tf.nn.max_pool2d(A1, ksize=[1,8,8,1], strides=[1,8,8,1], padding='SAME')
     # CONV2D: filters W2, stride 1, padding 'SAME'
     Z2 = tf.nn.conv2d(P1,W2, strides=[1,1,1,1], padding='SAME')
     # RELU
     A2 = tf.nn.relu(Z2)
     # MAXPOOL: window 4x4, stride 4, padding 'SAME'
-    P2 = tf.nn.max_pool(A2, ksize=[1,4,4,1], strides=[1,4,4,1], padding='SAME')
+    P2 = tf.nn.max_pool2d(A2, ksize=[1,4,4,1], strides=[1,4,4,1], padding='SAME')
     # FLATTEN
     P2 = tf.contrib.layers.flatten(P2)
     # FULLY-CONNECTED without non-linear activation function (not not call softmax).
     # 6 neurons in output layer. Hint: one of the arguments should be "activation_fn=None" 
-    Z3 = tf.contrib.layers.fully_connected(P2, 6, activation_fn=None)
+    Z3 = tf.contrib.layers.fully_connected(P2, 2, activation_fn=None)
     ### END CODE HERE ###
 
     return Z3
@@ -127,7 +130,7 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate = 0.009,
     """
     
     ops.reset_default_graph()                         # to be able to rerun the model without overwriting tf variables
-    tf.set_random_seed(1)                             # to keep results consistent (tensorflow seed)
+    tf.compat.v1.set_random_seed(1)                             # to keep results consistent (tensorflow seed)
     seed = 3                                          # to keep results consistent (numpy seed)
     (m, n_H0, n_W0, n_C0) = X_train.shape             
     n_y = Y_train.shape[1]                            
@@ -155,14 +158,14 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate = 0.009,
     
     # Backpropagation: Define the tensorflow optimizer. Use an AdamOptimizer that minimizes the cost.
     ### START CODE HERE ### (1 line)
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+    optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
     ### END CODE HERE ###
     
     # Initialize all the variables globally
-    init = tf.global_variables_initializer()
+    init = tf.compat.v1.global_variables_initializer()
      
     # Start the session to compute the tensorflow graph
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         
         # Run the initialization
         sess.run(init)
@@ -173,7 +176,7 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate = 0.009,
             minibatch_cost = 0.
             num_minibatches = int(m / minibatch_size) # number of minibatches of size minibatch_size in the train set
             seed = seed + 1
-            minibatches = random_mini_batches(X_train, Y_train, minibatch_size, seed)
+            minibatches = cnn_utils.random_mini_batches(X_train, Y_train, minibatch_size, seed)
 
             for minibatch in minibatches:
 
@@ -193,14 +196,6 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate = 0.009,
                 print ("Cost after epoch %i: %f" % (epoch, minibatch_cost))
             if print_cost == True and epoch % 1 == 0:
                 costs.append(minibatch_cost)
-        
-        
-        # plot the cost
-        plt.plot(np.squeeze(costs))
-        plt.ylabel('cost')
-        plt.xlabel('iterations (per tens)')
-        plt.title("Learning rate =" + str(learning_rate))
-        plt.show()
 
         # Calculate the correct predictions
         predict_op = tf.argmax(Z3, 1)
@@ -214,6 +209,13 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate = 0.009,
         print("Train Accuracy:", train_accuracy)
         print("Test Accuracy:", test_accuracy)
                 
+        # plot the cost
+        plt.plot(np.squeeze(costs))
+        plt.ylabel('cost')
+        plt.xlabel('iterations (per tens)')
+        plt.title("Learning rate =" + str(learning_rate) + ", Train Accuracy: " + str(train_accuracy) + ", Test Accuracy: " + str(test_accuracy))
+        plt.show()
+
         return train_accuracy, test_accuracy, parameters
 
 def run_model(X_train, Y_train, X_test, Y_test):

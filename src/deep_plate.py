@@ -1,4 +1,6 @@
 import imresize
+import matplotlib.pyplot as plt
+import numpy as np
 import tf_utils as utils
 import tf_cnn as cnn
 
@@ -37,18 +39,31 @@ def main():
     print("cv_set_y: " + str(cv_set_y.shape))
     print("classes: " + str(classes.shape))
 
+    # show one of the images of class 0
+    index = 6
+    _, ax = plt.subplots()
+    ax.imshow(np.uint8(tr_set_x[index]))
+    print ("y = " + str(np.squeeze(tr_set_y[:, index])))
+    plt.title("Class =" + str(np.squeeze(tr_set_y[:, index])))
+    plt.show()
+
+    # show one of the images of class 0
+    index = 120
+    _, ax = plt.subplots()
+    ax.imshow(np.uint8(tr_set_x[index]))
+    plt.title("Class =" + str(np.squeeze(tr_set_y[:, index])))
+    plt.show()
 
     X_train = tr_set_x/255.
+    Y_train = utils.convert_to_one_hot(np.uint(tr_set_y), 2).T
     X_test = ts_set_x/255.
-    Y_train = tr_set_y
-    Y_test = ts_set_y
+    Y_test = utils.convert_to_one_hot(np.uint(ts_set_y), 2).T 
     print ("number of training examples = " + str(X_train.shape[0]))
     print ("number of test examples = " + str(X_test.shape[0]))
     print ("X_train shape: " + str(X_train.shape))
     print ("Y_train shape: " + str(Y_train.shape))
     print ("X_test shape: " + str(X_test.shape))
     print ("Y_test shape: " + str(Y_test.shape))
-    conv_layers = {}
 
     cnn.model(X_train, Y_train, X_test, Y_test)
 
