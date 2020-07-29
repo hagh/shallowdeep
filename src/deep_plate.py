@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tf_utils as utils
 import tf_cnn as cnn
+import cnn_utils
 
 def main():
     generateResizedImages = False
@@ -65,7 +66,16 @@ def main():
     print ("X_test shape: " + str(X_test.shape))
     print ("Y_test shape: " + str(Y_test.shape))
 
-    cnn.model(X_train, Y_train, X_test, Y_test)
+    parameters = cnn.model(X_train, Y_train, X_test, Y_test, learning_rate = 0.01, num_epochs = 50, minibatch_size = 64, print_cost = True)
+
+    #index = 6
+    #X = X_test[index]
+    #_, ax = plt.subplots()
+    #ax.imshow(np.uint8(ts_set_x[index]))
+    #plt.title("Class =" + str(np.squeeze(ts_set_y[:, index])))
+    #plt.show()
+    #prediction = cnn_utils.predict(X, parameters)
+    #print ("Prediction = " + str(prediction))
 
 # Main entry to program
 if __name__ == '__main__':
