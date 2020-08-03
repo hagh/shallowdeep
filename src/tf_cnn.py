@@ -4,6 +4,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework import ops
 
+import random
+from PIL import Image, ImageDraw
 
 def create_placeholders(n_H0, n_W0, n_C0, n_y):
     """
@@ -88,6 +90,16 @@ def compute_cost(Z3, Y):
     return cost
 
 
+def generate_random_image(width=256, height=256, scale=16):
+    w = int(width/scale)
+    h = int(height/scale)
+    rand_pixels = [random.randint(0, 255) for _ in range(w * h * 3)]
+    rand_pixels_as_bytes = bytes(rand_pixels)
+    random_image = Image.frombytes('RGB', (w, h), rand_pixels_as_bytes)
+    random_image = random_image.resize((width, height))
+    return random_image
+
+
 def model(X_train, Y_train, X_test, Y_test, learning_rate=0.009,
           num_epochs=100, minibatch_size=64, print_cost=True):
     """
@@ -156,6 +168,7 @@ def model(X_train, Y_train, X_test, Y_test, learning_rate=0.009,
             minibatch_cost = 0.
             num_minibatches = int(m / minibatch_size)  # number of minibatches of size minibatch_size in the train set
             seed = seed + 1
+
             minibatches = cnn_utils.random_mini_batches(X_train, Y_train, minibatch_size, seed)
 
             for minibatch in minibatches:
@@ -211,9 +224,10 @@ def predict(X, parameters, save_path):
         saver.restore(sess, save_path)
 
         # Predict
+        z3eval = sess.run(z3, feed_dict={x: X})
         prediction = sess.run(p, feed_dict={x: X})
 
-    return prediction
+    return prediction, z3eval
 
 
 def run_model(
